@@ -61,15 +61,20 @@ class SPARouter {
   }
 
   renderPage(PageTemplate) {
-    const main = document.querySelector('main') || document.createElement('main');
+    let main = document.querySelector('main');
+    const body = document.querySelector('body');
+    const footer = document.querySelector('footer');
     
-    if (!document.querySelector('main')) {
-      const body = document.querySelector('body');
-      const footer = document.querySelector('footer');
+    if (!main) {
+      main = document.createElement('main');  
       body.insertBefore(main, footer);
     }
 
     main.innerHTML = PageTemplate();
+
+    main.setAttribute('tabindex', '-1');
+    main.focus(); 
+    main.removeAttribute('tabindex');
 
     // Inicializa funcionalidades específicas da página
     if (this.currentPage === 'cadastro.html') {
@@ -595,12 +600,23 @@ class FormValidator {
 
   static showError(input, errorElement, message) {
     input.classList.add('input-erro');
+    input.setAttribute('aria-invalid', 'true'); // Sinaliza para leitores de tela que o campo é inválido
+    
+    const errorId = errorElement.id;
+    if (errorId) {
+        // Liga o input à descrição do erro, que será lida pelo leitor de tela
+        input.setAttribute('aria-describedby', errorId); 
+    }
+    
     errorElement.textContent = message;
     errorElement.style.display = 'block';
   }
 
   static clearError(input, errorElement) {
     input.classList.remove('input-erro');
+    input.removeAttribute('aria-invalid');
+    input.removeAttribute('aria-describedby'); // Remove a associação
+    
     errorElement.textContent = '';
     errorElement.style.display = 'none';
   }
@@ -755,10 +771,10 @@ class FormValidator {
 
   
 
-  static showMessage(message, type) {
+static showMessage(message, type) {
     const msgDiv = document.getElementById('mensagem');
-    msgDiv.innerHTML = `<div class="alert ${type}">${message}</div>`;
-    
+    // Adiciona role="alert" para criar uma "live region" com alta prioridade
+    msgDiv.innerHTML = `<div role="alert" class="alert ${type}">${message}</div>`; 
     
     setTimeout(() => {
       msgDiv.innerHTML = '';
@@ -767,8 +783,7 @@ class FormValidator {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  
-  const router = new SPARouter();
+  new SPARouter();
 
   
   window.addEventListener('popstate', (e) => {
